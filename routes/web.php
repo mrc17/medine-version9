@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CompagnieController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +14,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Route d'accueil
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Routes pour les opérations Web sur les compagnies
+//Route::resource('compagnie', CompagnieController::class);

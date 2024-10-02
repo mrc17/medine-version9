@@ -11,24 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('compagnies', function (Blueprint $table) {
             $table->id();
             $table->string('nom');
-            $table->string('prenom');
-            $table->string('telephone');
-            $table->string('password');
-            $table->foreignId('role_id')->constrained('roles')->onUpdate('cascade');
-            $table->boolean('etat')->default(false);
-            $table->integer('attempt_logins')->default(0);
-            $table->rememberToken();
+            $table->string('sig');
+            $table->string('contact');
+            $table->string('localite');
+            $table->string('image');
+            $table->foreignId('responsable_id')->constrained('users')->onDelete('cascade');
+            $table->boolean('valide')->default(false);
             $table->timestamps();
         });
     }
+
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('compagnies');
     }
 };

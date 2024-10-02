@@ -3,10 +3,15 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Gare;
+use App\Models\Role;
+use App\Models\Ticket;
+use App\Models\Employe;
+use App\Models\Compagnie;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -18,9 +23,13 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'email',
+        'nom',
+        'prenom',
+        'telephone',
         'password',
+        'role_id',
+        'etat',
+        "attempt_logins",
     ];
 
     /**
@@ -42,4 +51,54 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /*
+    *The function get role user
+    *
+    * @param string
+    */
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function compagnie()
+    {
+        return $this->hasOne(Compagnie::class, 'responsable_id');
+    }
+
+    public function gares_responsable()
+    {
+        return $this->hasMany(Gare::class, 'responsable_gare_id');
+    }
+    public function gares_caisse()
+    {
+        return $this->hasMany(Gare::class, 'caisse_id');
+    }
+
+    public function gares_comptable()
+    {
+        return $this->hasMany(Gare::class, 'comptable_id');
+    }
+
+    public function gare_responsable()
+    {
+        return $this->hasOne(Gare::class, 'responsable_gare_id');
+    }
+
+    public function gare_comptable()
+    {
+        return $this->hasOne(Gare::class, 'comptable_id');
+    }
+
+
+    public function employe()
+    {
+        return $this->hasOne(Employe::class);
+    }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
 }
