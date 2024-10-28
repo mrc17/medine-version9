@@ -33,6 +33,8 @@ class CreateTicketsTable extends Migration
             $table->string('num_ticket')->unique(); // Numéro du ticket
             $table->integer('place')->nullable(); // Numéro de place si confirmé
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

@@ -8,11 +8,12 @@ use App\Models\Trajet;
 use App\Models\GareCaisse;
 use App\Models\Planification;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Gare extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         "nom",
@@ -35,10 +36,11 @@ class Gare extends Model
         return $this->belongsTo(User::class, 'comptable_id');
     }
 
-    public function caisse()
+    public function caissiers()
     {
         return $this->hasMany(GareCaisse::class, 'gare_id');
     }
+
 
     public function compagnie()
     {

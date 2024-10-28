@@ -21,6 +21,7 @@ return new class extends Migration
             $table->foreignId('responsable_gare_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('caisse_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('compagnie_id')->constrained('compagnies')->onDelete('cascade');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

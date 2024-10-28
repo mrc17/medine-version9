@@ -8,6 +8,9 @@ use App\Models\Role;
 use App\Models\Ticket;
 use App\Models\Employe;
 use App\Models\Compagnie;
+use App\Models\GareCaisse;
+use App\Models\Affiliation;
+use App\Models\InfoEmploye;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -73,7 +76,7 @@ class User extends Authenticatable
     }
     public function gares_caisse()
     {
-        return $this->hasMany(Gare::class, 'caisse_id');
+        return $this->hasOne(GareCaisse::class, 'user_id');
     }
 
     public function gares_comptable()
@@ -100,5 +103,15 @@ class User extends Authenticatable
     public function tickets()
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    public function affiliations()
+    {
+        return $this->hasMany(Affiliation::class);
+    }
+
+    public function infoEmploye()
+    {
+        return $this->hasOne(InfoEmploye::class, 'user_id');
     }
 }

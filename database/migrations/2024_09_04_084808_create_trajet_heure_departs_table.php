@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('trajet_id')->constrained('trajets')->onDelete('cascade')->onUpdate('cascade');
             $table->foreignId('heure_depart_id')->constrained('heure_departs')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

@@ -135,7 +135,7 @@ class PayerTicketController extends Controller
                         "tarif" => $prix,
                         "numero_paiement" => $num_tel,
                         "codeticket" => $num_tel,
-                        "montant_ttc" => $montant_ttc,
+                        "montant_ttc" => $montant_ttc/$request->input('nbrTicket'),
                         "num_ticket" => $this->geneNumTicket(),
                         "place" => $this->getplace($planification),
                     ];

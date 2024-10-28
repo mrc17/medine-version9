@@ -17,6 +17,8 @@ return new class extends Migration
             $table->integer("montant");
             $table->foreignId('compagnie_id')->constrained('compagnies')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

@@ -1,0 +1,32 @@
+.primary {
+    background-color: #071949;
+}
+
+.secondary {
+    background-color: #FB9D1C;
+}
+
+.text-color {
+    color: #FB9D1C;
+}
+
+.text-primary {
+    color: #071949;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+.large-text {
+    font-family: Arial, sans-serif;
+    font-size: 40px;
+    fill: #6b7280;
+    /* Dark color */
+    font-weight: bold;
+}
+
+.large-text:hover {
+    fill: #ffffff;
+    /* Change fill on hover */
+}

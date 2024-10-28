@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('password')->default('$2y$10$R7MSTLTDaReL/bLQknoel.qKx54/ocYussbQ9muThDRz97sgpGA9.'); //2580
             $table->foreignId('compagnie_id')->constrained('compagnies')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

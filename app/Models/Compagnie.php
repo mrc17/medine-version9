@@ -4,15 +4,17 @@ namespace App\Models;
 
 use App\Models\Car;
 use App\Models\Gare;
+use App\Models\User;
 use App\Models\Ticket;
 use App\Models\Employe;
 use App\Models\Portefeuille;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Compagnie extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         "nom",
@@ -24,7 +26,8 @@ class Compagnie extends Model
         "responsable_id",
     ];
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
@@ -47,9 +50,9 @@ class Compagnie extends Model
         return $this->hasMany(Employe::class);
     }
 
-    public function portefeuilles()
+    public function portefeuille()
     {
-        return $this->hasMany(Portefeuille::class);
+        return $this->hasOne(Portefeuille::class);
     }
     public function tickets()
     {

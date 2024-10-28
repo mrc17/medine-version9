@@ -17,6 +17,8 @@ return new class extends Migration
             $table->longText("code");
             $table->boolean("etat")->default(false);
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

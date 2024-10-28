@@ -2,116 +2,170 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\Gare;
+use Inertia\Inertia;
+use GuzzleHttp\Client;
+use App\Models\Employe;
 use App\Models\Compagnie;
-use Illuminate\Http\Request;
-use App\Http\Requests\CreateCompagnieRequest;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Exception\RequestException;
 
 class CompagnieController extends Controller
 {
     /**
-     * Affiche la liste des compagnies.
+     * Display a listing of validated companies.
      */
     public function index()
     {
-        // Vérifier les autorisations d'accès
-        if (Gate::denies('view-compagnies')) {
-            return redirect()->route('home')->with('error', 'Vous n\'avez pas la permission d\'accéder à cette page.');
-        }
+        // Fetch companies with their responsible person where the company is validated
+        $compagnies = Compagnie::with('responsable')->where('valide', 1)->get();
 
-        $compagnies = Compagnie::all();
-        return view('compagnies.index', compact('compagnies'));
+        return Inertia::render('Compagnie/Index', [
+            'auth' => auth()->user(),
+            'compagnies' => $compagnies,
+        ]);
+    }
+
+    public function count(){
+        $demandeCount = Compagnie::with('responsable')->where('valide', 0)->count();
+
+        return response()->json(['count' => $demandeCount]);
     }
 
     /**
-     * Affiche le formulaire de création d'une nouvelle compagnie.
+     * Display a listing of pending company validation requests.
      */
-    public function create()
+    public function demandes()
     {
-        // Vérifier les autorisations d'accès
-        if (Gate::denies('create-compagnie')) {
-            return redirect()->route('home')->with('error', 'Vous n\'avez pas la permission d\'accéder à cette page.');
-        }
+        // Fetch unvalidated companies ordered by newest first
+        $compagnies = Compagnie::with('responsable')->where('valide', 0)->orderBy('id', 'desc')->get();
 
-        return view('compagnies.create');
+        return Inertia::render('Compagnie/Wattend', [
+            'auth' => auth()->user(),
+            'compagnies' => $compagnies,
+        ]);
     }
 
     /**
-     * Stocke une nouvelle compagnie dans la base de données.
-     */
-    public function store(CreateCompagnieRequest $request)
-    {
-        // Vérifier les autorisations d'accès
-        if (Gate::denies('create-compagnie')) {
-            return redirect()->route('home')->with('error', 'Vous n\'avez pas la permission d\'effectuer cette action.');
-        }
-
-        $compagnie = Compagnie::create($request->validated());
-
-        return redirect()->route('compagnies.index')->with('success', 'Compagnie créée avec succès.');
-    }
-
-    /**
-     * Affiche les détails de la compagnie spécifiée.
+     * Display detailed information for a specific company.
+     *
+     * @param  Compagnie $compagnie
+     * @return \Inertia\Response
      */
     public function show(Compagnie $compagnie)
     {
-        // Vérifier les autorisations d'accès
-        if (Gate::denies('view-compagnie', $compagnie)) {
-            return redirect()->route('home')->with('error', 'Vous n\'avez pas la permission d\'accéder à cette page.');
-        }
+        $compagnie = Compagnie::with([
+            'responsable',
+            'gares',
+            'cars',
+            'portefeuille',
+            'tickets.user',
+            'employes.user.gares_caisse.gare',
+            'employes.user.role',
+            'employes.user.gare_comptable',
+            'employes.user.gare_responsable',
+        ])->findOrFail($compagnie->id);
 
-        return view('compagnies.show', compact('compagnie'));
-    }
-
-    /**
-     * Affiche le formulaire pour modifier la compagnie spécifiée.
-     */
-    public function edit(Compagnie $compagnie)
-    {
-        // Vérifier les autorisations d'accès
-        if (Gate::denies('update-compagnie', $compagnie)) {
-            return redirect()->route('home')->with('error', 'Vous n\'avez pas la permission d\'accéder à cette page.');
-        }
-
-        return view('compagnies.edit', compact('compagnie'));
-    }
-
-    /**
-     * Met à jour les informations de la compagnie spécifiée.
-     */
-    public function update(Request $request, Compagnie $compagnie)
-    {
-        // Vérifier les autorisations d'accès
-        if (Gate::denies('update-compagnie', $compagnie)) {
-            return redirect()->route('home')->with('error', 'Vous n\'avez pas la permission d\'effectuer cette action.');
-        }
-
-        $request->validate([
-            'nom' => 'required|string|max:255|unique:compagnies,nom,' . $compagnie->id,
-            'sig' => 'required|string|max:255',
-            'valide' => 'required|boolean',
-            'contact' => 'required|string|max:255',
-            'localite' => 'required|string|max:255',
+        return Inertia::render('Compagnie/Show', [
+            'auth' => auth()->user(),
+            'compagnie' => $compagnie,
         ]);
+    }
 
-        $compagnie->update($request->only(['nom', 'sig', 'valide', 'contact', 'localite']));
 
-        return redirect()->route('compagnies.index')->with('success', 'Compagnie mise à jour avec succès.');
+
+    /**
+     * Validate the company and process the company logo image.
+     *
+     * @param  Compagnie $compagnie
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function valide(Compagnie $compagnie)
+    {
+        // Update the company to set it as validated and process its image
+        $updatedData = [
+            'valide' => 1,
+            'image' => $this->removeBackground($compagnie->path),
+        ];
+
+        $compagnie->update($updatedData);
+
+        return redirect()->route('compagnies.index')->with('success', 'Compagnie validée avec succès.');
     }
 
     /**
-     * Supprime la compagnie spécifiée.
+     * Remove the background from the company's image using the remove.bg API.
+     *
+     * @param  string $filePath
+     * @return string
+     */
+    public function removeBackground($filePath)
+    {
+        $client = new Client();
+        $apiKey = env('REMOVE_BG_API_KEY');
+
+        $image = fopen(public_path($filePath), 'r');
+
+        try {
+            // Make the request to remove.bg to process the image
+            $response = $client->request('POST', 'https://api.remove.bg/v1.0/removebg', [
+                'headers' => [
+                    'X-Api-Key' => $apiKey,
+                ],
+                'multipart' => [
+                    [
+                        'name' => 'image_file',
+                        'contents' => $image,
+                    ],
+                    [
+                        'name' => 'size',
+                        'contents' => 'auto',
+                    ],
+                ],
+                'sink' => public_path('images/compagnies/processed_' . basename($filePath)),
+            ]);
+
+            fclose($image);
+
+            if ($response->getStatusCode() === 200) {
+                // Return the path of the processed image if the request was successful
+                return 'images/compagnies/processed_' . basename($filePath);
+            }
+        } catch (RequestException $e) {
+            // Log the error message for debugging purposes
+            Log::error('Remove.bg error: ' . $e->getMessage());
+        }
+
+        // Return the original file path if the request fails
+        return $filePath;
+    }
+
+    /**
+     * Remove the specified company and its associated data (employees, stations, etc.)
+     *
+     * @param  Compagnie $compagnie
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Compagnie $compagnie)
     {
-        // Vérifier les autorisations d'accès
-        if (Gate::denies('delete-compagnie', $compagnie)) {
-            return redirect()->route('home')->with('error', 'Vous n\'avez pas la permission d\'effectuer cette action.');
-        }
+        // Delete the responsible user's account
+        User::where('id', $compagnie->responsable_id)->delete();
 
-        $compagnie->delete();
-        return redirect()->route('compagnies.index')->with('success', 'Compagnie supprimée avec succès.');
+        // Delete all related employees and stations (gares)
+        Employe::where('compagnie_id', $compagnie->id)->delete();
+        Gare::where('compagnie_id', $compagnie->id)->delete();
+
+        // Finally, delete the company itself
+        $compagnie->forceDelete();
+
+        // Redirect back with a success message
+        return redirect()->back()->with('success', 'Compagnie supprimée avec succès.');
     }
 
+    public function delete(Compagnie $compagnie)
+    {
+        $compagnie->delete();
+        return redirect()->route('compagnies.index')->with('message', 'Compagnie supprimée définitivement');
+    }
 }

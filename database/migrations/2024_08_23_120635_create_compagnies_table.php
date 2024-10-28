@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('image');
             $table->foreignId('responsable_id')->constrained('users')->onDelete('cascade');
             $table->boolean('valide')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

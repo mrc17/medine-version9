@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('role_id')->constrained('roles')->onUpdate('cascade');
             $table->boolean('etat')->default(false);
             $table->integer('attempt_logins')->default(0);
+            $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();
         });

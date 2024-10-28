@@ -19,6 +19,8 @@ return new class extends Migration
             $table->foreignId('gare_id')->constrained('gares')->onDelete('cascade')->onUpdate('cascade');
             $table->foreignId('mode_depart_id')->constrained('mode_departs')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

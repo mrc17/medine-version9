@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('codedepart');
             $table->string('heure');
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

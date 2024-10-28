@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('compagnie_id')->constrained('compagnies')->onDelete('cascade')->onUpdate('cascade');
             $table->boolean('valide')->default(false);
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 
