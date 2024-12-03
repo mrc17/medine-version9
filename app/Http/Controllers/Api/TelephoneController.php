@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use Twilio\Rest\Client;
 use App\Models\Compagnie;
 use App\Models\Telephone;
 use App\Models\Portefeuille;
@@ -58,15 +59,45 @@ class TelephoneController extends Controller
     // Méthode pour générer un code aléatoire de 6 chiffres
     private function genereCodeToSms()
     {
-        //return rand(10000, 99999); // Plage de 6 chiffres
-        return 76322; // Plage de 6 chiffres
+        return rand(10000, 99999);
+    }
+
+    protected function SmsService($confirmationCode, $phoneNumber)
+    {
+        try {
+            $accountSid = env("TWILIO_SID");
+            $authToken = env("TWILIO_AUTH_TOKEN");
+            $twilioNumber = env("TWILIO_NUMBER");
+
+            // Créer une instance du client Twilio
+            $twilio = new Client($accountSid, $authToken);
+
+            // Composer le message
+            $messageBody = "Votre code de confirmation est : " . $confirmationCode;
+
+            // Envoyer le message
+            $message = $twilio->messages->create(
+                $phoneNumber, // Numéro du destinataire
+                [
+                    'from' => $twilioNumber,
+                    'body' => $messageBody,
+                ]
+            );
+
+            // Retourner le SID du message (pour référence)
+            return $message->sid;
+        } catch (\Exception $e) {
+            // Gérer les erreurs en journalisant ou en retournant une réponse JSON appropriée
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     // Méthode pour envoyer le code par SMS et l'enregistrer dans la base de données
     private function sendCodeToSmsAndSaveDb($telephone, $code)
     {
+
         // Envoi du code par SMS (la logique dépendra du fournisseur de SMS)
-        // Exemple : SmsService::send($telephone, "Votre code est : $code");
+        $this->SmsService($telephone,  $code);
 
         // Enregistrement du code dans la table 'telephones'
         $telephoneVerification = Telephone::create([
